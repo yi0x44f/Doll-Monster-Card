@@ -1,5 +1,4 @@
-<script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+<script setup>
 import { ref, computed, onMounted, nextTick } from 'vue';
 
 const nameList = ref('');
@@ -8,8 +7,8 @@ const showVideo = ref(false);
 const showResult = ref(false);
 const videoFadeOut = ref(false);
 const selectedName = ref('');
-const videoElement = ref<HTMLVideoElement | null>(null);
-const audioElement = ref<HTMLAudioElement | null>(null);
+const videoElement = ref(null);
+const audioElement = ref(null);
 const isMuted = ref(true);
 
 const names = computed(() => {
@@ -24,7 +23,6 @@ const canDraw = computed(() => names.value.length > 0);
 const handleTimeUpdate = () => {
     if (videoElement.value) {
         const timeRemaining = videoElement.value.duration - videoElement.value.currentTime;
-        // Start fading to white 1 second before the end
         if (timeRemaining <= 1 && !videoFadeOut.value) {
             videoFadeOut.value = true;
         }
@@ -55,11 +53,9 @@ const tryAutoPlay = async () => {
 };
 
 onMounted(async () => {
-    // Auto-play BGM when page loads
     await nextTick();
     tryAutoPlay();
 
-    // Try to play on first user interaction
     const handleFirstInteraction = () => {
         tryAutoPlay();
         document.removeEventListener('click', handleFirstInteraction);
@@ -73,17 +69,14 @@ onMounted(async () => {
 const startDraw = () => {
     if (!canDraw.value || isDrawing.value) return;
 
-    // Randomly select a name
     const randomIndex = Math.floor(Math.random() * names.value.length);
     selectedName.value = names.value[randomIndex];
 
-    // Show video
     isDrawing.value = true;
     showVideo.value = true;
     showResult.value = false;
     videoFadeOut.value = false;
 
-    // Play video
     setTimeout(() => {
         if (videoElement.value) {
             videoElement.value.play();
@@ -92,7 +85,6 @@ const startDraw = () => {
 };
 
 const handleVideoEnded = () => {
-    // Show result with fade effect
     setTimeout(() => {
         showResult.value = true;
     }, 500);
@@ -118,15 +110,13 @@ const reset = () => {
 </script>
 
 <template>
-    <Head title="Yu Gi Oh!" />
-
     <!-- Background Music -->
     <audio ref="audioElement" loop>
         <source src="/duel-bgm.mp3" type="audio/mpeg" />
     </audio>
 
     <div class="min-h-screen bg-white text-black flex items-center justify-center p-8">
-        <!-- Main Input Area (hidden when drawing) -->
+        <!-- Main Input Area -->
         <div v-if="!isDrawing" class="w-full max-w-2xl space-y-6">
             <div class="flex items-center justify-center gap-4 mb-8">
                 <h1 class="text-4xl font-light text-center">決鬥吧 遊戲 Boy !</h1>
