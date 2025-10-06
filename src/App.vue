@@ -100,15 +100,33 @@ const fadeInAudio = () => {
 onMounted(async () => {
     await nextTick();
 
-    // Monitor music loading
+    // Monitor music loading and auto-play
     if (audioElement.value) {
-        audioElement.value.addEventListener('canplaythrough', () => {
+        const handleCanPlayThrough = async () => {
             isMusicLoading.value = false;
-        });
+            // Auto-play after loading
+            try {
+                await audioElement.value.play();
+                isMuted.value = false;
+            } catch (error) {
+                console.log('Autoplay prevented, waiting for user interaction:', error);
+            }
+        };
+
+        audioElement.value.addEventListener('canplaythrough', handleCanPlayThrough);
+
         // Fallback: if audio is already loaded
         if (audioElement.value.readyState >= 3) {
-            isMusicLoading.value = false;
+            await handleCanPlayThrough();
         }
+
+        // Monitor play state
+        audioElement.value.addEventListener('play', () => {
+            isMuted.value = false;
+        });
+        audioElement.value.addEventListener('pause', () => {
+            isMuted.value = true;
+        });
     }
 
     tryAutoPlay();
@@ -177,7 +195,7 @@ const reset = () => {
 
 <template>
     <!-- Background Music -->
-    <audio ref="audioElement" loop preload="auto">
+    <audio ref="audioElement" loop preload="auto" autoplay>
         <source src="/duel-bgm.mp3" type="audio/mpeg" />
     </audio>
 
