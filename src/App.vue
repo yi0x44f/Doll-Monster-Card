@@ -52,6 +52,50 @@ const tryAutoPlay = async () => {
     }
 };
 
+const fadeOutAudio = () => {
+    if (!audioElement.value) return;
+
+    const audio = audioElement.value;
+    const fadeDuration = 1000;
+    const steps = 20;
+    const stepTime = fadeDuration / steps;
+    const volumeStep = audio.volume / steps;
+
+    const fadeInterval = setInterval(() => {
+        if (audio.volume > volumeStep) {
+            audio.volume = Math.max(0, audio.volume - volumeStep);
+        } else {
+            audio.volume = 0;
+            clearInterval(fadeInterval);
+        }
+    }, stepTime);
+};
+
+const fadeInAudio = () => {
+    if (!audioElement.value) return;
+
+    const audio = audioElement.value;
+    const fadeDuration = 1000;
+    const steps = 20;
+    const stepTime = fadeDuration / steps;
+    const targetVolume = 1;
+    const volumeStep = targetVolume / steps;
+
+    audio.volume = 0;
+    if (audio.paused) {
+        audio.play();
+    }
+
+    const fadeInterval = setInterval(() => {
+        if (audio.volume < targetVolume - volumeStep) {
+            audio.volume = Math.min(targetVolume, audio.volume + volumeStep);
+        } else {
+            audio.volume = targetVolume;
+            clearInterval(fadeInterval);
+        }
+    }, stepTime);
+};
+
 onMounted(async () => {
     await nextTick();
     tryAutoPlay();
@@ -77,6 +121,11 @@ const startDraw = () => {
     showResult.value = false;
     videoFadeOut.value = false;
 
+    // Mute background music immediately
+    if (audioElement.value) {
+        audioElement.value.volume = 0;
+    }
+
     setTimeout(() => {
         if (videoElement.value) {
             videoElement.value.play();
@@ -87,6 +136,8 @@ const startDraw = () => {
 const handleVideoEnded = () => {
     setTimeout(() => {
         showResult.value = true;
+        // Fade in background music when showing result
+        fadeInAudio();
     }, 500);
 };
 
@@ -97,6 +148,8 @@ const skipVideo = () => {
     videoFadeOut.value = true;
     setTimeout(() => {
         showResult.value = true;
+        // Fade in background music when showing result
+        fadeInAudio();
     }, 500);
 };
 
@@ -122,7 +175,7 @@ const reset = () => {
                 <h1 class="text-4xl font-light text-center">決鬥吧 遊戲 Boy !</h1>
                 <button
                     @click="toggleAudio"
-                    class="px-3 py-2 text-sm hover:bg-gray-100 transition-colors"
+                    class="px-3 py-2 text-4xl hover:bg-gray-100 transition-colors"
                     :title="isMuted ? '播放音樂' : '暫停音樂'"
                 >
                     {{ isMuted ? '🔊' : '🔇' }}
@@ -137,7 +190,7 @@ const reset = () => {
                     v-model="nameList"
                     rows="12"
                     class="w-full px-4 py-3 border-2 border-black focus:outline-none focus:ring-0 font-mono text-base resize-none"
-                    placeholder="Alice&#10;Bob&#10;Charlie"
+                    placeholder="太陽神的翼神龍&#10;歐西里斯的天空龍&#10;歐貝利斯克的巨神兵"
                 />
                 <div class="text-sm text-gray-600">
                     共 {{ names.length }} 個名字
@@ -163,7 +216,8 @@ const reset = () => {
                 @ended="handleVideoEnded"
                 @timeupdate="handleTimeUpdate"
                 class="w-full h-full object-contain"
-                muted
+                playsinline
+                webkit-playsinline
             >
                 <source src="/doll-animation.mp4" type="video/mp4" />
             </video>
