@@ -33,6 +33,7 @@ const handleTimeUpdate = () => {
 const toggleAudio = () => {
     if (audioElement.value) {
         if (isMuted.value) {
+            audioElement.value.volume = 1;
             audioElement.value.play();
             isMuted.value = false;
         } else {
@@ -167,8 +168,10 @@ const startDraw = () => {
 const handleVideoEnded = () => {
     setTimeout(() => {
         showResult.value = true;
-        // Fade in background music when showing result
-        fadeInAudio();
+        // Fade in background music only if it's not muted
+        if (!isMuted.value) {
+            fadeInAudio();
+        }
     }, 500);
 };
 
@@ -179,8 +182,10 @@ const skipVideo = () => {
     videoFadeOut.value = true;
     setTimeout(() => {
         showResult.value = true;
-        // Fade in background music when showing result
-        fadeInAudio();
+        // Fade in background music only if it's not muted
+        if (!isMuted.value) {
+            fadeInAudio();
+        }
     }, 500);
 };
 
