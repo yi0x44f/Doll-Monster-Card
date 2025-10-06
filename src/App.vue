@@ -10,6 +10,7 @@ const selectedName = ref('');
 const videoElement = ref(null);
 const audioElement = ref(null);
 const isMuted = ref(true);
+const isMusicLoading = ref(true);
 
 const names = computed(() => {
     return nameList.value
@@ -98,6 +99,18 @@ const fadeInAudio = () => {
 
 onMounted(async () => {
     await nextTick();
+
+    // Monitor music loading
+    if (audioElement.value) {
+        audioElement.value.addEventListener('canplaythrough', () => {
+            isMusicLoading.value = false;
+        });
+        // Fallback: if audio is already loaded
+        if (audioElement.value.readyState >= 3) {
+            isMusicLoading.value = false;
+        }
+    }
+
     tryAutoPlay();
 
     const handleFirstInteraction = () => {
@@ -164,9 +177,19 @@ const reset = () => {
 
 <template>
     <!-- Background Music -->
-    <audio ref="audioElement" loop>
+    <audio ref="audioElement" loop preload="auto">
         <source src="/duel-bgm.mp3" type="audio/mpeg" />
     </audio>
+
+    <!-- Full Screen Loading Indicator -->
+    <Transition name="fade">
+        <div
+            v-if="isMusicLoading"
+            class="fixed inset-0 bg-white flex items-center justify-center z-50"
+        >
+            <p class="text-gray-500 text-2xl font-light">載入中...</p>
+        </div>
+    </Transition>
 
     <div class="min-h-screen bg-white text-black flex items-center justify-center p-8">
         <!-- Main Input Area -->
@@ -283,5 +306,27 @@ const reset = () => {
     100% {
         opacity: 1;
     }
+}
+
+.animate-fade-out {
+    animation: fadeOut 0.5s ease-in-out forwards;
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Transition for loading indicator */
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.5s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
 }
 </style>
